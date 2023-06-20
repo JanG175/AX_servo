@@ -1,6 +1,6 @@
 /**
  * @file AX_servo.h
- * @author DRUTY INDUSTRIES
+ * @author JanG175
  * @brief DYNAMIXEL AX-12A SERIAL PROTOCOL LIBRARY
  * 
  * @copyright All rigths reserved (R) 2023
