@@ -73,11 +73,11 @@ static bool AX_servo_check_response(uint8_t ID, uint8_t* response, uint32_t len)
  * @param packet pointer to packet
  * @param len length of packet
  */
-static void AX_servo_send_packet(AX_servo_conf_t AX, uint8_t* packet, uint32_t len)
+static void AX_servo_send_packet(AX_servo_conf_t AX_conf, uint8_t* packet, uint32_t len)
 {
     // send uint8_t array to servo byte by byte
-    uart_write_bytes(AX.uart, (const uint8_t*)packet, len);
-    ESP_ERROR_CHECK(uart_wait_tx_done(AX.uart, UART_TIMEOUT_MS));
+    uart_write_bytes(AX_conf.uart, (const uint8_t*)packet, len);
+    ESP_ERROR_CHECK(uart_wait_tx_done(AX_conf.uart, AX_UART_TIMEOUT_MS));
 }
 
 
@@ -88,14 +88,14 @@ static void AX_servo_send_packet(AX_servo_conf_t AX, uint8_t* packet, uint32_t l
  * @param response pointer to response packet
  * @param len length of response packet
  */
-static void AX_servo_receive_response(AX_servo_conf_t AX, uint8_t* response, uint32_t len)
+static void AX_servo_receive_response(AX_servo_conf_t AX_conf, uint8_t* response, uint32_t len)
 {
     uint32_t buf = 0;
     uint8_t data[len];
 
     // receive uint8_t array from servo
-    buf = uart_read_bytes(AX.uart, data, len, UART_TIMEOUT_MS);
-    uart_flush(AX.uart);
+    buf = uart_read_bytes(AX_conf.uart, data, len, AX_UART_TIMEOUT_MS);
+    uart_flush(AX_conf.uart);
 
     if (buf == len)
     {
@@ -119,10 +119,10 @@ static void AX_servo_receive_response(AX_servo_conf_t AX, uint8_t* response, uin
  * 
  * @param AX struct with UART parameters
  */
-void AX_servo_init(AX_servo_conf_t AX)
+void AX_servo_init(AX_servo_conf_t AX_conf)
 {
     uart_config_t uart_config = {
-        .baud_rate = AX.baudrate,
+        .baud_rate = AX_conf.baudrate,
         .data_bits = UART_DATA_8_BITS,
         .parity = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
@@ -131,11 +131,14 @@ void AX_servo_init(AX_servo_conf_t AX)
         .source_clk = UART_SCLK_DEFAULT
     };
 
-    ESP_ERROR_CHECK(uart_driver_install(AX.uart, 2048, 2048, 0, NULL, 0));
-    ESP_ERROR_CHECK(uart_param_config(AX.uart, &uart_config));
-    ESP_ERROR_CHECK(uart_set_pin(AX.uart, AX.tx_pin, AX.rx_pin, AX.rts_pin, UART_PIN_NO_CHANGE));
-    ESP_ERROR_CHECK(uart_set_mode(AX.uart, UART_MODE_RS485_HALF_DUPLEX)); // half duplex communication
-    ESP_ERROR_CHECK(uart_set_line_inverse(AX.uart, UART_SIGNAL_RTS_INV)); // set inverse direction of RTS pin
+    if (uart_is_driver_installed(AX_conf.uart) == true)
+        ESP_ERROR_CHECK(uart_driver_delete(AX_conf.uart));
+
+    ESP_ERROR_CHECK(uart_driver_install(AX_conf.uart, 2048, 2048, 0, NULL, 0));
+    ESP_ERROR_CHECK(uart_param_config(AX_conf.uart, &uart_config));
+    ESP_ERROR_CHECK(uart_set_pin(AX_conf.uart, AX_conf.tx_pin, AX_conf.rx_pin, AX_conf.rts_pin, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(uart_set_mode(AX_conf.uart, UART_MODE_RS485_HALF_DUPLEX)); // half duplex communication
+    ESP_ERROR_CHECK(uart_set_line_inverse(AX_conf.uart, UART_SIGNAL_RTS_INV)); // set inverse direction of RTS pin
 }
 
 
@@ -144,9 +147,9 @@ void AX_servo_init(AX_servo_conf_t AX)
  * 
  * @param AX struct with UART parameters
  */
-void AX_servo_deinit(AX_servo_conf_t AX)
+void AX_servo_deinit(AX_servo_conf_t AX_conf)
 {
-    ESP_ERROR_CHECK(uart_driver_delete(AX.uart));
+    ESP_ERROR_CHECK(uart_driver_delete(AX_conf.uart));
 }
 
 
@@ -156,7 +159,7 @@ void AX_servo_deinit(AX_servo_conf_t AX)
  * @param AX struct with UART parameters
  * @param ID servo ID
  */
-void AX_servo_ping(AX_servo_conf_t AX, uint8_t ID)
+void AX_servo_ping(AX_servo_conf_t AX_conf, uint8_t ID)
 {
     uint32_t len = 6;
     uint8_t packet[len];
@@ -168,7 +171,7 @@ void AX_servo_ping(AX_servo_conf_t AX, uint8_t ID)
     packet[4] = AX_PING;
     packet[5] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -179,7 +182,7 @@ void AX_servo_ping(AX_servo_conf_t AX, uint8_t ID)
  * @param id servo ID
  * @param pos goal position
  */
-void AX_servo_set_pos(AX_servo_conf_t AX, uint8_t ID, uint16_t pos)
+void AX_servo_set_pos(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t pos)
 {
     uint8_t pos_H, pos_L;
     pos_H = pos >> 8;
@@ -198,7 +201,7 @@ void AX_servo_set_pos(AX_servo_conf_t AX, uint8_t ID, uint16_t pos)
     packet[7] = pos_H;
     packet[8] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -210,7 +213,7 @@ void AX_servo_set_pos(AX_servo_conf_t AX, uint8_t ID, uint16_t pos)
  * @param pos goal position
  * @param speed speed
  */
-void AX_servo_set_pos_w_spd(AX_servo_conf_t AX, uint8_t ID, uint16_t pos, uint16_t speed)
+void AX_servo_set_pos_w_spd(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t pos, uint16_t speed)
 {
     uint8_t pos_H, pos_L, spd_H, spd_L;
     pos_H = pos >> 8;
@@ -233,7 +236,7 @@ void AX_servo_set_pos_w_spd(AX_servo_conf_t AX, uint8_t ID, uint16_t pos, uint16
     packet[9] = spd_H;
     packet[10] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -244,7 +247,7 @@ void AX_servo_set_pos_w_spd(AX_servo_conf_t AX, uint8_t ID, uint16_t pos, uint16
  * @param ID servo ID
  * @param status true - enable, false - disable
  */
-void AX_servo_set_endless(AX_servo_conf_t AX, uint8_t ID, bool status)
+void AX_servo_set_endless(AX_servo_conf_t AX_conf, uint8_t ID, bool status)
 {
     if (status == true)
     {
@@ -261,11 +264,11 @@ void AX_servo_set_endless(AX_servo_conf_t AX, uint8_t ID, bool status)
         packet[7] = OFF;
         packet[8] = AX_servo_calc_checksum(packet, len);
 
-        AX_servo_send_packet(AX, packet, len);
+        AX_servo_send_packet(AX_conf, packet, len);
     }
     else
     {
-        AX_servo_conf_turn(AX, ID, 0, 0);
+        AX_servo_conf_turn(AX_conf, ID, 0, 0);
 
         uint32_t len = 9;
         uint8_t packet[len];
@@ -280,7 +283,7 @@ void AX_servo_set_endless(AX_servo_conf_t AX, uint8_t ID, bool status)
         packet[7] = AX_CCW_AL_H;
         packet[8] = AX_servo_calc_checksum(packet, len);
 
-        AX_servo_send_packet(AX, packet, len);
+        AX_servo_send_packet(AX_conf, packet, len);
     }
 }
 
@@ -293,7 +296,7 @@ void AX_servo_set_endless(AX_servo_conf_t AX, uint8_t ID, bool status)
  * @param side LEFT (CCW) or RIGHT (CW)
  * @param speed speed
  */
-void AX_servo_conf_turn(AX_servo_conf_t AX, uint8_t ID, uint8_t side, uint16_t speed)
+void AX_servo_conf_turn(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t side, uint16_t speed)
 {
     if (side == LEFT)
     {
@@ -314,7 +317,7 @@ void AX_servo_conf_turn(AX_servo_conf_t AX, uint8_t ID, uint8_t side, uint16_t s
         packet[7] = spd_H;
         packet[8] = AX_servo_calc_checksum(packet, len);
 
-        AX_servo_send_packet(AX, packet, len);
+        AX_servo_send_packet(AX_conf, packet, len);
     }
     else if (side == RIGHT)
     {
@@ -335,7 +338,7 @@ void AX_servo_conf_turn(AX_servo_conf_t AX, uint8_t ID, uint8_t side, uint16_t s
         packet[7] = spd_H;
         packet[8] = AX_servo_calc_checksum(packet, len);
 
-        AX_servo_send_packet(AX, packet, len);
+        AX_servo_send_packet(AX_conf, packet, len);
     }
 }
 
@@ -347,7 +350,7 @@ void AX_servo_conf_turn(AX_servo_conf_t AX, uint8_t ID, uint8_t side, uint16_t s
  * @param ID servo ID
  * @param torque max torque
  */
-void AX_servo_set_max_torque(AX_servo_conf_t AX, uint8_t ID, uint16_t torque)
+void AX_servo_set_max_torque(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t torque)
 {
     uint8_t max_torque_frame_H = torque >> 8;
     uint8_t max_torque_frame_L = torque & 0xFF;
@@ -365,7 +368,7 @@ void AX_servo_set_max_torque(AX_servo_conf_t AX, uint8_t ID, uint16_t torque)
     packet[7] = max_torque_frame_H;
     packet[8] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -376,7 +379,7 @@ void AX_servo_set_max_torque(AX_servo_conf_t AX, uint8_t ID, uint16_t torque)
  * @param ID servo ID
  * @param status true - enable, false - disable
  */
-void AX_servo_conf_torque_status(AX_servo_conf_t AX, uint8_t ID, uint8_t status)
+void AX_servo_conf_torque_status(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t status)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -390,7 +393,7 @@ void AX_servo_conf_torque_status(AX_servo_conf_t AX, uint8_t ID, uint8_t status)
     packet[6] = status;
     packet[7] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -401,7 +404,7 @@ void AX_servo_conf_torque_status(AX_servo_conf_t AX, uint8_t ID, uint8_t status)
  * @param ID servo ID
  * @return current position
  */
-uint16_t AX_servo_get_pos(AX_servo_conf_t AX, uint8_t ID)
+uint16_t AX_servo_get_pos(AX_servo_conf_t AX_conf, uint8_t ID)
 {
     uint8_t pos_frame_L = 0;
     uint8_t pos_frame_H = 0;
@@ -424,12 +427,12 @@ uint16_t AX_servo_get_pos(AX_servo_conf_t AX, uint8_t ID)
 
     do
     {
-        AX_servo_send_packet(AX, packet, len_w);
-        AX_servo_receive_response(AX, response, len_r);
+        AX_servo_send_packet(AX_conf, packet, len_w);
+        AX_servo_receive_response(AX_conf, response, len_r);
         cnt++;
-    } while ((AX_servo_check_response(ID, response, len_r) == false) && (cnt < UART_MAX_REPEAT));
+    } while ((AX_servo_check_response(ID, response, len_r) == false) && (cnt < AX_UART_MAX_REPEAT));
 
-    if (cnt < UART_MAX_REPEAT)
+    if (cnt < AX_UART_MAX_REPEAT)
     {
         pos_frame_L = response[5];
         pos_frame_H = response[6];
@@ -439,7 +442,7 @@ uint16_t AX_servo_get_pos(AX_servo_conf_t AX, uint8_t ID)
         if (abort_on == true)
         {
             ESP_LOGE(TAG, "Servo %u not responding - aborting...", ID);
-            AX_servo_deinit(AX);
+            AX_servo_deinit(AX_conf);
             abort();
         }
     }
@@ -456,7 +459,7 @@ uint16_t AX_servo_get_pos(AX_servo_conf_t AX, uint8_t ID)
  * @param CWLimit clockwise limit
  * @param CCWLimit counter clockwise limit
  */
-void AX_servo_set_angle_limit(AX_servo_conf_t AX, uint8_t ID, uint16_t CWLimit, uint16_t CCWLimit)
+void AX_servo_set_angle_limit(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t CWLimit, uint16_t CCWLimit)
 {
     uint8_t CW_H = CWLimit >> 8;
     uint8_t CW_L = CWLimit & 0xFF;
@@ -479,7 +482,7 @@ void AX_servo_set_angle_limit(AX_servo_conf_t AX, uint8_t ID, uint16_t CWLimit, 
     packet[10] = CCW_H;
     packet[11] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -490,7 +493,7 @@ void AX_servo_set_angle_limit(AX_servo_conf_t AX, uint8_t ID, uint16_t CWLimit, 
  * @param ID servo ID
  * @param status LED level
  */
-void AX_servo_set_led(AX_servo_conf_t AX, uint8_t ID, uint8_t status)
+void AX_servo_set_led(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t status)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -504,7 +507,7 @@ void AX_servo_set_led(AX_servo_conf_t AX, uint8_t ID, uint8_t status)
     packet[6] = status;
     packet[7] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -517,7 +520,7 @@ void AX_servo_set_led(AX_servo_conf_t AX, uint8_t ID, uint8_t status)
  * @param reg_len register length
  * @return register value
  */
-uint16_t AX_servo_read_register(AX_servo_conf_t AX, uint8_t ID, uint8_t reg, uint8_t reg_len)
+uint16_t AX_servo_read_register(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t reg, uint8_t reg_len)
 {
     uint8_t reg_frame = 0;
     uint32_t len_w = 8;
@@ -538,12 +541,12 @@ uint16_t AX_servo_read_register(AX_servo_conf_t AX, uint8_t ID, uint8_t reg, uin
 
     do
     {
-        AX_servo_send_packet(AX, packet, len_w);
-        AX_servo_receive_response(AX, response, len_r);
+        AX_servo_send_packet(AX_conf, packet, len_w);
+        AX_servo_receive_response(AX_conf, response, len_r);
         cnt++;
-    } while ((AX_servo_check_response(ID, response, len_r) == false) && (cnt < UART_MAX_REPEAT));
+    } while ((AX_servo_check_response(ID, response, len_r) == false) && (cnt < AX_UART_MAX_REPEAT));
 
-    if (cnt < UART_MAX_REPEAT)
+    if (cnt < AX_UART_MAX_REPEAT)
     {
         switch (reg_len)
         {
@@ -561,7 +564,7 @@ uint16_t AX_servo_read_register(AX_servo_conf_t AX, uint8_t ID, uint8_t reg, uin
         if (abort_on == true)
         {
             ESP_LOGE(TAG, "Servo %u not responding - aborting...", ID);
-            AX_servo_deinit(AX);
+            AX_servo_deinit(AX_conf);
             abort();
         }
     }
@@ -578,7 +581,7 @@ uint16_t AX_servo_read_register(AX_servo_conf_t AX, uint8_t ID, uint8_t reg, uin
  * @param reg register number
  * @param reg_val register value
  */
-void AX_servo_write_register(AX_servo_conf_t AX, uint8_t ID, uint8_t reg, uint8_t reg_val)
+void AX_servo_write_register(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t reg, uint8_t reg_val)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -592,7 +595,7 @@ void AX_servo_write_register(AX_servo_conf_t AX, uint8_t ID, uint8_t reg, uint8_
     packet[6] = reg_val;
     packet[7] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -604,7 +607,7 @@ void AX_servo_write_register(AX_servo_conf_t AX, uint8_t ID, uint8_t reg, uint8_
  * @param AX struct with UART parameters
  * @param ID servo ID
  */
-void AX_servo_reset(AX_servo_conf_t AX, uint8_t ID)
+void AX_servo_reset(AX_servo_conf_t AX_conf, uint8_t ID)
 {
     uint32_t len = 6;
     uint8_t packet[len];
@@ -616,23 +619,23 @@ void AX_servo_reset(AX_servo_conf_t AX, uint8_t ID)
     packet[4] = AX_RESET;
     packet[5] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 
     // reset sets id to 1 and baudrate to 1000000
 
-    uint32_t baud = AX.baudrate;
-    AX_servo_deinit(AX);
-    AX.baudrate = 1000000;
+    uint32_t baud = AX_conf.baudrate;
+    AX_servo_deinit(AX_conf);
+    AX_conf.baudrate = 1000000;
 
     vTaskDelay(10 / portTICK_PERIOD_MS);
 
-    AX_servo_init(AX);
+    AX_servo_init(AX_conf);
     vTaskDelay(10 / portTICK_PERIOD_MS);
 
-    AX_servo_set_ID(AX, 1, ID);
+    AX_servo_set_ID(AX_conf, 1, ID);
     vTaskDelay(10 / portTICK_PERIOD_MS);
 
-    AX_servo_set_BD(AX, ID, baud);
+    AX_servo_set_BD(AX_conf, ID, baud);
 }
 
 
@@ -643,7 +646,7 @@ void AX_servo_reset(AX_servo_conf_t AX, uint8_t ID)
  * @param ID current servo ID
  * @param newID new servo ID
  */
-void AX_servo_set_ID(AX_servo_conf_t AX, uint8_t ID, uint8_t newID)
+void AX_servo_set_ID(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t newID)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -657,7 +660,7 @@ void AX_servo_set_ID(AX_servo_conf_t AX, uint8_t ID, uint8_t newID)
     packet[6] = newID;
     packet[7] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -668,7 +671,7 @@ void AX_servo_set_ID(AX_servo_conf_t AX, uint8_t ID, uint8_t newID)
  * @param ID servo ID
  * @param baud new baudrate
  */
-void AX_servo_set_BD(AX_servo_conf_t AX, uint8_t ID, uint8_t BAUD)
+void AX_servo_set_BD(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t BAUD)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -682,7 +685,7 @@ void AX_servo_set_BD(AX_servo_conf_t AX, uint8_t ID, uint8_t BAUD)
     packet[6] = BAUD;
     packet[7] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -693,7 +696,7 @@ void AX_servo_set_BD(AX_servo_conf_t AX, uint8_t ID, uint8_t BAUD)
  * @param ID servo ID
  * @return temperature
  */
-int16_t AX_servo_get_temperature(AX_servo_conf_t AX, uint8_t ID)
+int16_t AX_servo_get_temperature(AX_servo_conf_t AX_conf, uint8_t ID)
 {
     uint16_t temp_frame = 0;
     uint32_t len_w = 8;
@@ -714,12 +717,12 @@ int16_t AX_servo_get_temperature(AX_servo_conf_t AX, uint8_t ID)
 
     do
     {
-        AX_servo_send_packet(AX, packet, len_w);
-        AX_servo_receive_response(AX, response, len_r);
+        AX_servo_send_packet(AX_conf, packet, len_w);
+        AX_servo_receive_response(AX_conf, response, len_r);
         cnt++;
-    } while ((AX_servo_check_response(ID, response, len_r) == false) && (cnt < UART_MAX_REPEAT));
+    } while ((AX_servo_check_response(ID, response, len_r) == false) && (cnt < AX_UART_MAX_REPEAT));
 
-    if (cnt < UART_MAX_REPEAT)
+    if (cnt < AX_UART_MAX_REPEAT)
     {
         temp_frame = response[5];
     }
@@ -728,7 +731,7 @@ int16_t AX_servo_get_temperature(AX_servo_conf_t AX, uint8_t ID)
         if (abort_on == true)
         {
             ESP_LOGE(TAG, "Servo %u not responding - aborting...", ID);
-            AX_servo_deinit(AX);
+            AX_servo_deinit(AX_conf);
             abort();
         }
     }
@@ -744,7 +747,7 @@ int16_t AX_servo_get_temperature(AX_servo_conf_t AX, uint8_t ID)
  * @param ID servo ID
  * @return 1 - moving, 0 - not moving
  */
-uint8_t AX_servo_is_moving(AX_servo_conf_t AX, uint8_t ID)
+uint8_t AX_servo_is_moving(AX_servo_conf_t AX_conf, uint8_t ID)
 {
     uint8_t mov_byte = 0;
     uint32_t len_w = 8;
@@ -765,12 +768,12 @@ uint8_t AX_servo_is_moving(AX_servo_conf_t AX, uint8_t ID)
 
     do
     {
-        AX_servo_send_packet(AX, packet, len_w);
-        AX_servo_receive_response(AX, response, len_r);
+        AX_servo_send_packet(AX_conf, packet, len_w);
+        AX_servo_receive_response(AX_conf, response, len_r);
         cnt++;
-    } while ((AX_servo_check_response(ID, response, len_r) == false) && (cnt < UART_MAX_REPEAT));
+    } while ((AX_servo_check_response(ID, response, len_r) == false) && (cnt < AX_UART_MAX_REPEAT));
 
-    if (cnt < UART_MAX_REPEAT)
+    if (cnt < AX_UART_MAX_REPEAT)
     {
         mov_byte = response[5];
     }
@@ -779,7 +782,7 @@ uint8_t AX_servo_is_moving(AX_servo_conf_t AX, uint8_t ID)
         if (abort_on == true)
         {
             ESP_LOGE(TAG, "Servo %u not responding - aborting...", ID);
-            AX_servo_deinit(AX);
+            AX_servo_deinit(AX_conf);
             abort();
         }
     }
@@ -795,7 +798,7 @@ uint8_t AX_servo_is_moving(AX_servo_conf_t AX, uint8_t ID)
  * @param ID servo ID
  * @return current torque
  */
-uint16_t AX_servo_get_load(AX_servo_conf_t AX, uint8_t ID)
+uint16_t AX_servo_get_load(AX_servo_conf_t AX_conf, uint8_t ID)
 {
     uint8_t load_byte_L = 0;
     uint8_t load_byte_H = 0;
@@ -818,12 +821,12 @@ uint16_t AX_servo_get_load(AX_servo_conf_t AX, uint8_t ID)
 
     do
     {
-        AX_servo_send_packet(AX, packet, len_w);
-        AX_servo_receive_response(AX, response, len_r);
+        AX_servo_send_packet(AX_conf, packet, len_w);
+        AX_servo_receive_response(AX_conf, response, len_r);
         cnt++;
-    } while ((AX_servo_check_response(ID, response, len_r) == false) && (cnt < UART_MAX_REPEAT));
+    } while ((AX_servo_check_response(ID, response, len_r) == false) && (cnt < AX_UART_MAX_REPEAT));
 
-    if (cnt < UART_MAX_REPEAT)
+    if (cnt < AX_UART_MAX_REPEAT)
     {
         load_byte_L = response[5];
         load_byte_H = response[6];
@@ -833,7 +836,7 @@ uint16_t AX_servo_get_load(AX_servo_conf_t AX, uint8_t ID)
         if (abort_on == true)
         {
             ESP_LOGE(TAG, "Servo %u not responding - aborting...", ID);
-            AX_servo_deinit(AX);
+            AX_servo_deinit(AX_conf);
             abort();
         }
     }
@@ -849,7 +852,7 @@ uint16_t AX_servo_get_load(AX_servo_conf_t AX, uint8_t ID)
  * @param ID servo ID
  * @param salarm shutdown alarm number
  */
-void AX_servo_set_shutdown_alarm(AX_servo_conf_t AX, uint8_t ID, uint8_t salarm)
+void AX_servo_set_shutdown_alarm(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t salarm)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -863,7 +866,7 @@ void AX_servo_set_shutdown_alarm(AX_servo_conf_t AX, uint8_t ID, uint8_t salarm)
     packet[6] = salarm;
     packet[7] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -875,7 +878,7 @@ void AX_servo_set_shutdown_alarm(AX_servo_conf_t AX, uint8_t ID, uint8_t salarm)
  * @param CWCMargin clockwise compliance margin
  * @param CCWCMargin counter clockwise compliance margin
  */
-void AX_servo_set_C_margin(AX_servo_conf_t AX, uint8_t ID, uint8_t CWCMargin, uint8_t CCWCMargin)
+void AX_servo_set_C_margin(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t CWCMargin, uint8_t CCWCMargin)
 {
     uint32_t len = 10;
     uint8_t packet[len];
@@ -891,7 +894,7 @@ void AX_servo_set_C_margin(AX_servo_conf_t AX, uint8_t ID, uint8_t CWCMargin, ui
     packet[8] = CCWCMargin;
     packet[9] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -903,7 +906,7 @@ void AX_servo_set_C_margin(AX_servo_conf_t AX, uint8_t ID, uint8_t CWCMargin, ui
  * @param CWCSlope clockwise compliance slope
  * @param CCWCSlope counter clockwise compliance slope
  */
-void AX_servo_set_C_slope(AX_servo_conf_t AX, uint8_t ID, uint8_t CWCSlope, uint8_t CCWCSlope)
+void AX_servo_set_C_slope(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t CWCSlope, uint8_t CCWCSlope)
 {
     uint32_t len = 10;
     uint8_t packet[len];
@@ -919,7 +922,7 @@ void AX_servo_set_C_slope(AX_servo_conf_t AX, uint8_t ID, uint8_t CWCSlope, uint
     packet[8] = CCWCSlope;
     packet[9] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
 
 
@@ -930,7 +933,7 @@ void AX_servo_set_C_slope(AX_servo_conf_t AX, uint8_t ID, uint8_t CWCSlope, uint
  * @param ID servo ID
  * @param punch punch
  */
-void AX_servo_set_punch(AX_servo_conf_t AX, uint8_t ID, uint16_t punch)
+void AX_servo_set_punch(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t punch)
 {
     uint8_t punch_H = punch >> 8;
     uint8_t punch_L = punch & 0xFF;
@@ -948,5 +951,5 @@ void AX_servo_set_punch(AX_servo_conf_t AX, uint8_t ID, uint16_t punch)
     packet[7] = punch_H;
     packet[8] = AX_servo_calc_checksum(packet, len);
 
-    AX_servo_send_packet(AX, packet, len);
+    AX_servo_send_packet(AX_conf, packet, len);
 }
