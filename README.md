@@ -31,8 +31,6 @@ It is recommended to wait 10 ms to make sure that servo has received critical UA
 
 If read operation fails too many times (see UART_MAX_REPEAT and UART_TIMEOUT_MS), ESP32 will reset itself.
 
-RTS signal is inverted!
-
 ## Sources:
 * https://emanual.robotis.com/docs/en/dxl/ax/ax-12a/
 * http://www.da.isy.liu.se/vanheden/pdf/AX-12.pdf

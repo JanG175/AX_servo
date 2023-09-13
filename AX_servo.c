@@ -138,7 +138,6 @@ void AX_servo_init(AX_servo_conf_t AX_conf)
     ESP_ERROR_CHECK(uart_param_config(AX_conf.uart, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(AX_conf.uart, AX_conf.tx_pin, AX_conf.rx_pin, AX_conf.rts_pin, UART_PIN_NO_CHANGE));
     ESP_ERROR_CHECK(uart_set_mode(AX_conf.uart, UART_MODE_RS485_HALF_DUPLEX)); // half duplex communication
-    ESP_ERROR_CHECK(uart_set_line_inverse(AX_conf.uart, UART_SIGNAL_RTS_INV)); // set inverse direction of RTS pin
 }
 
 
