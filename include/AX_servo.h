@@ -140,60 +140,60 @@
 #define AX_UART_MAX_REPEAT          50
 #define AX_UART_TIMEOUT_MS          (20 / portTICK_PERIOD_MS)
 
-typedef struct AX_servo_conf_t
+typedef struct AX_conf_t
 {
     uart_port_t uart;
     gpio_num_t tx_pin;
     gpio_num_t rx_pin;
     gpio_num_t rts_pin;
     uint32_t baudrate;
-} AX_servo_conf_t;
+} AX_conf_t;
 
 
-void AX_servo_init(AX_servo_conf_t AX_conf);
+void AX_servo_init(AX_conf_t AX_conf);
 
-void AX_servo_deinit(AX_servo_conf_t AX_conf);
+void AX_servo_deinit(AX_conf_t AX_conf);
 
-void AX_servo_ping(AX_servo_conf_t AX_conf, uint8_t ID);
+void AX_servo_ping(AX_conf_t AX_conf, uint8_t ID);
 
-void AX_servo_set_pos(AX_servo_conf_t AX_conf, uint8_t id, uint16_t pos);
+void AX_servo_set_pos(AX_conf_t AX_conf, uint8_t id, uint16_t pos);
 
-void AX_servo_set_pos_w_spd(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t pos, uint16_t speed);
+void AX_servo_set_pos_w_spd(AX_conf_t AX_conf, uint8_t ID, uint16_t pos, uint16_t speed);
 
-void AX_servo_set_endless(AX_servo_conf_t AX_conf, uint8_t ID, bool status);
+void AX_servo_set_endless(AX_conf_t AX_conf, uint8_t ID, bool status);
 
-void AX_servo_conf_turn(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t side, uint16_t speed);
+void AX_conf_turn(AX_conf_t AX_conf, uint8_t ID, uint8_t side, uint16_t speed);
 
-void AX_servo_set_max_torque(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t torque);
+void AX_servo_set_max_torque(AX_conf_t AX_conf, uint8_t ID, uint16_t torque);
 
-void AX_servo_conf_torque_status(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t status);
+void AX_conf_torque_status(AX_conf_t AX_conf, uint8_t ID, uint8_t status);
 
-uint16_t AX_servo_get_pos(AX_servo_conf_t AX_conf, uint8_t ID);
+uint16_t AX_servo_get_pos(AX_conf_t AX_conf, uint8_t ID);
 
-void AX_servo_set_angle_limit(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t CWLimit, uint16_t CCWLimit);
+void AX_servo_set_angle_limit(AX_conf_t AX_conf, uint8_t ID, uint16_t CWLimit, uint16_t CCWLimit);
 
-void AX_servo_set_led(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t status);
+void AX_servo_set_led(AX_conf_t AX_conf, uint8_t ID, uint8_t status);
 
-uint16_t AX_servo_read_register(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t reg, uint8_t reg_len);
+uint16_t AX_servo_read_register(AX_conf_t AX_conf, uint8_t ID, uint8_t reg, uint8_t reg_len);
 
-void AX_servo_write_register(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t reg, uint8_t reg_val);
+void AX_servo_write_register(AX_conf_t AX_conf, uint8_t ID, uint8_t reg, uint8_t reg_val);
 
-void AX_servo_reset(AX_servo_conf_t AX_conf, uint8_t ID);
+void AX_servo_reset(AX_conf_t AX_conf, uint8_t ID);
 
-void AX_servo_set_ID(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t newID);
+void AX_servo_set_ID(AX_conf_t AX_conf, uint8_t ID, uint8_t newID);
 
-void AX_servo_set_BD(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t BAUD);
+void AX_servo_set_BD(AX_conf_t AX_conf, uint8_t ID, uint8_t BAUD);
 
-int16_t AX_servo_get_temperature(AX_servo_conf_t AX_conf, uint8_t ID);
+int16_t AX_servo_get_temperature(AX_conf_t AX_conf, uint8_t ID);
 
-uint8_t AX_servo_is_moving(AX_servo_conf_t AX_conf, uint8_t ID);
+uint8_t AX_servo_is_moving(AX_conf_t AX_conf, uint8_t ID);
 
-uint16_t AX_servo_get_load(AX_servo_conf_t AX_conf, uint8_t ID);
+uint16_t AX_servo_get_load(AX_conf_t AX_conf, uint8_t ID);
 
-void AX_servo_set_shutdown_alarm(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t salarm);
+void AX_servo_set_shutdown_alarm(AX_conf_t AX_conf, uint8_t ID, uint8_t salarm);
 
-void AX_servo_set_C_margin(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t CWCMargin, uint8_t CCWCMargin);
+void AX_servo_set_C_margin(AX_conf_t AX_conf, uint8_t ID, uint8_t CWCMargin, uint8_t CCWCMargin);
 
-void AX_servo_set_C_slope(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t CWCSlope, uint8_t CCWCSlope);
+void AX_servo_set_C_slope(AX_conf_t AX_conf, uint8_t ID, uint8_t CWCSlope, uint8_t CCWCSlope);
 
-void AX_servo_set_punch(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t punch);
+void AX_servo_set_punch(AX_conf_t AX_conf, uint8_t ID, uint16_t punch);

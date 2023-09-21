@@ -73,7 +73,7 @@ static bool AX_servo_check_response(uint8_t ID, uint8_t* response, uint32_t len)
  * @param packet pointer to packet
  * @param len length of packet
  */
-static void AX_servo_send_packet(AX_servo_conf_t AX_conf, uint8_t* packet, uint32_t len)
+static void AX_servo_send_packet(AX_conf_t AX_conf, uint8_t* packet, uint32_t len)
 {
     // send uint8_t array to servo byte by byte
     uart_write_bytes(AX_conf.uart, (const uint8_t*)packet, len);
@@ -88,7 +88,7 @@ static void AX_servo_send_packet(AX_servo_conf_t AX_conf, uint8_t* packet, uint3
  * @param response pointer to response packet
  * @param len length of response packet
  */
-static void AX_servo_receive_response(AX_servo_conf_t AX_conf, uint8_t* response, uint32_t len)
+static void AX_servo_receive_response(AX_conf_t AX_conf, uint8_t* response, uint32_t len)
 {
     uint32_t buf = 0;
     uint8_t data[len];
@@ -119,7 +119,7 @@ static void AX_servo_receive_response(AX_servo_conf_t AX_conf, uint8_t* response
  * 
  * @param AX struct with UART parameters
  */
-void AX_servo_init(AX_servo_conf_t AX_conf)
+void AX_servo_init(AX_conf_t AX_conf)
 {
     uart_config_t uart_config = {
         .baud_rate = AX_conf.baudrate,
@@ -146,7 +146,7 @@ void AX_servo_init(AX_servo_conf_t AX_conf)
  * 
  * @param AX struct with UART parameters
  */
-void AX_servo_deinit(AX_servo_conf_t AX_conf)
+void AX_servo_deinit(AX_conf_t AX_conf)
 {
     ESP_ERROR_CHECK(uart_driver_delete(AX_conf.uart));
 }
@@ -158,7 +158,7 @@ void AX_servo_deinit(AX_servo_conf_t AX_conf)
  * @param AX struct with UART parameters
  * @param ID servo ID
  */
-void AX_servo_ping(AX_servo_conf_t AX_conf, uint8_t ID)
+void AX_servo_ping(AX_conf_t AX_conf, uint8_t ID)
 {
     uint32_t len = 6;
     uint8_t packet[len];
@@ -181,7 +181,7 @@ void AX_servo_ping(AX_servo_conf_t AX_conf, uint8_t ID)
  * @param id servo ID
  * @param pos goal position
  */
-void AX_servo_set_pos(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t pos)
+void AX_servo_set_pos(AX_conf_t AX_conf, uint8_t ID, uint16_t pos)
 {
     uint8_t pos_H, pos_L;
     pos_H = pos >> 8;
@@ -212,7 +212,7 @@ void AX_servo_set_pos(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t pos)
  * @param pos goal position
  * @param speed speed
  */
-void AX_servo_set_pos_w_spd(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t pos, uint16_t speed)
+void AX_servo_set_pos_w_spd(AX_conf_t AX_conf, uint8_t ID, uint16_t pos, uint16_t speed)
 {
     uint8_t pos_H, pos_L, spd_H, spd_L;
     pos_H = pos >> 8;
@@ -246,7 +246,7 @@ void AX_servo_set_pos_w_spd(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t pos, u
  * @param ID servo ID
  * @param status true - enable, false - disable
  */
-void AX_servo_set_endless(AX_servo_conf_t AX_conf, uint8_t ID, bool status)
+void AX_servo_set_endless(AX_conf_t AX_conf, uint8_t ID, bool status)
 {
     if (status == true)
     {
@@ -267,7 +267,7 @@ void AX_servo_set_endless(AX_servo_conf_t AX_conf, uint8_t ID, bool status)
     }
     else
     {
-        AX_servo_conf_turn(AX_conf, ID, 0, 0);
+        AX_conf_turn(AX_conf, ID, 0, 0);
 
         uint32_t len = 9;
         uint8_t packet[len];
@@ -295,7 +295,7 @@ void AX_servo_set_endless(AX_servo_conf_t AX_conf, uint8_t ID, bool status)
  * @param side LEFT (CCW) or RIGHT (CW)
  * @param speed speed
  */
-void AX_servo_conf_turn(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t side, uint16_t speed)
+void AX_conf_turn(AX_conf_t AX_conf, uint8_t ID, uint8_t side, uint16_t speed)
 {
     if (side == LEFT)
     {
@@ -349,7 +349,7 @@ void AX_servo_conf_turn(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t side, uint1
  * @param ID servo ID
  * @param torque max torque
  */
-void AX_servo_set_max_torque(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t torque)
+void AX_servo_set_max_torque(AX_conf_t AX_conf, uint8_t ID, uint16_t torque)
 {
     uint8_t max_torque_frame_H = torque >> 8;
     uint8_t max_torque_frame_L = torque & 0xFF;
@@ -378,7 +378,7 @@ void AX_servo_set_max_torque(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t torqu
  * @param ID servo ID
  * @param status true - enable, false - disable
  */
-void AX_servo_conf_torque_status(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t status)
+void AX_conf_torque_status(AX_conf_t AX_conf, uint8_t ID, uint8_t status)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -403,7 +403,7 @@ void AX_servo_conf_torque_status(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t st
  * @param ID servo ID
  * @return current position
  */
-uint16_t AX_servo_get_pos(AX_servo_conf_t AX_conf, uint8_t ID)
+uint16_t AX_servo_get_pos(AX_conf_t AX_conf, uint8_t ID)
 {
     uint8_t pos_frame_L = 0;
     uint8_t pos_frame_H = 0;
@@ -458,7 +458,7 @@ uint16_t AX_servo_get_pos(AX_servo_conf_t AX_conf, uint8_t ID)
  * @param CWLimit clockwise limit
  * @param CCWLimit counter clockwise limit
  */
-void AX_servo_set_angle_limit(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t CWLimit, uint16_t CCWLimit)
+void AX_servo_set_angle_limit(AX_conf_t AX_conf, uint8_t ID, uint16_t CWLimit, uint16_t CCWLimit)
 {
     uint8_t CW_H = CWLimit >> 8;
     uint8_t CW_L = CWLimit & 0xFF;
@@ -492,7 +492,7 @@ void AX_servo_set_angle_limit(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t CWLi
  * @param ID servo ID
  * @param status LED level
  */
-void AX_servo_set_led(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t status)
+void AX_servo_set_led(AX_conf_t AX_conf, uint8_t ID, uint8_t status)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -519,7 +519,7 @@ void AX_servo_set_led(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t status)
  * @param reg_len register length
  * @return register value
  */
-uint16_t AX_servo_read_register(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t reg, uint8_t reg_len)
+uint16_t AX_servo_read_register(AX_conf_t AX_conf, uint8_t ID, uint8_t reg, uint8_t reg_len)
 {
     uint8_t reg_frame = 0;
     uint32_t len_w = 8;
@@ -580,7 +580,7 @@ uint16_t AX_servo_read_register(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t reg
  * @param reg register number
  * @param reg_val register value
  */
-void AX_servo_write_register(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t reg, uint8_t reg_val)
+void AX_servo_write_register(AX_conf_t AX_conf, uint8_t ID, uint8_t reg, uint8_t reg_val)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -606,7 +606,7 @@ void AX_servo_write_register(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t reg, u
  * @param AX struct with UART parameters
  * @param ID servo ID
  */
-void AX_servo_reset(AX_servo_conf_t AX_conf, uint8_t ID)
+void AX_servo_reset(AX_conf_t AX_conf, uint8_t ID)
 {
     uint32_t len = 6;
     uint8_t packet[len];
@@ -645,7 +645,7 @@ void AX_servo_reset(AX_servo_conf_t AX_conf, uint8_t ID)
  * @param ID current servo ID
  * @param newID new servo ID
  */
-void AX_servo_set_ID(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t newID)
+void AX_servo_set_ID(AX_conf_t AX_conf, uint8_t ID, uint8_t newID)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -670,7 +670,7 @@ void AX_servo_set_ID(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t newID)
  * @param ID servo ID
  * @param baud new baudrate
  */
-void AX_servo_set_BD(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t BAUD)
+void AX_servo_set_BD(AX_conf_t AX_conf, uint8_t ID, uint8_t BAUD)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -695,7 +695,7 @@ void AX_servo_set_BD(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t BAUD)
  * @param ID servo ID
  * @return temperature
  */
-int16_t AX_servo_get_temperature(AX_servo_conf_t AX_conf, uint8_t ID)
+int16_t AX_servo_get_temperature(AX_conf_t AX_conf, uint8_t ID)
 {
     uint16_t temp_frame = 0;
     uint32_t len_w = 8;
@@ -746,7 +746,7 @@ int16_t AX_servo_get_temperature(AX_servo_conf_t AX_conf, uint8_t ID)
  * @param ID servo ID
  * @return 1 - moving, 0 - not moving
  */
-uint8_t AX_servo_is_moving(AX_servo_conf_t AX_conf, uint8_t ID)
+uint8_t AX_servo_is_moving(AX_conf_t AX_conf, uint8_t ID)
 {
     uint8_t mov_byte = 0;
     uint32_t len_w = 8;
@@ -797,7 +797,7 @@ uint8_t AX_servo_is_moving(AX_servo_conf_t AX_conf, uint8_t ID)
  * @param ID servo ID
  * @return current torque
  */
-uint16_t AX_servo_get_load(AX_servo_conf_t AX_conf, uint8_t ID)
+uint16_t AX_servo_get_load(AX_conf_t AX_conf, uint8_t ID)
 {
     uint8_t load_byte_L = 0;
     uint8_t load_byte_H = 0;
@@ -851,7 +851,7 @@ uint16_t AX_servo_get_load(AX_servo_conf_t AX_conf, uint8_t ID)
  * @param ID servo ID
  * @param salarm shutdown alarm number
  */
-void AX_servo_set_shutdown_alarm(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t salarm)
+void AX_servo_set_shutdown_alarm(AX_conf_t AX_conf, uint8_t ID, uint8_t salarm)
 {
     uint32_t len = 8;
     uint8_t packet[len];
@@ -877,7 +877,7 @@ void AX_servo_set_shutdown_alarm(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t sa
  * @param CWCMargin clockwise compliance margin
  * @param CCWCMargin counter clockwise compliance margin
  */
-void AX_servo_set_C_margin(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t CWCMargin, uint8_t CCWCMargin)
+void AX_servo_set_C_margin(AX_conf_t AX_conf, uint8_t ID, uint8_t CWCMargin, uint8_t CCWCMargin)
 {
     uint32_t len = 10;
     uint8_t packet[len];
@@ -905,7 +905,7 @@ void AX_servo_set_C_margin(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t CWCMargi
  * @param CWCSlope clockwise compliance slope
  * @param CCWCSlope counter clockwise compliance slope
  */
-void AX_servo_set_C_slope(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t CWCSlope, uint8_t CCWCSlope)
+void AX_servo_set_C_slope(AX_conf_t AX_conf, uint8_t ID, uint8_t CWCSlope, uint8_t CCWCSlope)
 {
     uint32_t len = 10;
     uint8_t packet[len];
@@ -932,7 +932,7 @@ void AX_servo_set_C_slope(AX_servo_conf_t AX_conf, uint8_t ID, uint8_t CWCSlope,
  * @param ID servo ID
  * @param punch punch
  */
-void AX_servo_set_punch(AX_servo_conf_t AX_conf, uint8_t ID, uint16_t punch)
+void AX_servo_set_punch(AX_conf_t AX_conf, uint8_t ID, uint16_t punch)
 {
     uint8_t punch_H = punch >> 8;
     uint8_t punch_L = punch & 0xFF;
