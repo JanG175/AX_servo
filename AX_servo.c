@@ -148,7 +148,8 @@ void AX_servo_init(AX_conf_t AX_conf)
  */
 void AX_servo_deinit(AX_conf_t AX_conf)
 {
-    ESP_ERROR_CHECK(uart_driver_delete(AX_conf.uart));
+    if (uart_is_driver_installed(AX_conf.uart) == true)
+        ESP_ERROR_CHECK(uart_driver_delete(AX_conf.uart));
 }
 
 
