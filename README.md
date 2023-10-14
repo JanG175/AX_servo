@@ -1,4 +1,8 @@
-# AX_servo instruction list:
+# Dynamixel AX-12A servo ESP32 component for ESP IDF
+This is an ESP IDF component to steer Dynamixel AX-12A / AX-12+ servo with ESP32 microcontroller.
+Feel free to use and contribute to it!
+
+## AX_servo instruction list:
 * void AX_servo_init(AX_conf_t AX) - init ESP32 UART connection
 * void AX_servo_deinit(AX_conf_t AX) - deinit ESP32 UART connection
 * void AX_servo_ping(AX_conf_t AX, uint8_t ID) - ping servo
