@@ -93,9 +93,13 @@ static void AX_servo_receive_response(AX_conf_t AX_conf, uint8_t* response, uint
     uint32_t buf = 0;
     uint8_t data[len];
 
+    gpio_set_level(AX_conf.rts_pin, 0); // set RTS to read
+
     // receive uint8_t array from servo
     buf = uart_read_bytes(AX_conf.uart, data, len, AX_UART_TIMEOUT_MS);
     uart_flush(AX_conf.uart);
+
+    gpio_set_level(AX_conf.rts_pin, 1); // set RTS to write
 
     if (buf == len)
     {
@@ -136,8 +140,19 @@ void AX_servo_init(AX_conf_t AX_conf)
 
     ESP_ERROR_CHECK(uart_driver_install(AX_conf.uart, 2048, 2048, 0, NULL, 0));
     ESP_ERROR_CHECK(uart_param_config(AX_conf.uart, &uart_config));
-    ESP_ERROR_CHECK(uart_set_pin(AX_conf.uart, AX_conf.tx_pin, AX_conf.rx_pin, AX_conf.rts_pin, UART_PIN_NO_CHANGE));
-    ESP_ERROR_CHECK(uart_set_mode(AX_conf.uart, UART_MODE_RS485_HALF_DUPLEX)); // half duplex communication
+    ESP_ERROR_CHECK(uart_set_pin(AX_conf.uart, AX_conf.tx_pin, AX_conf.rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    // ESP_ERROR_CHECK(uart_set_mode(AX_conf.uart, UART_MODE_RS485_HALF_DUPLEX)); // half duplex communication
+
+    // set RTS pin
+    gpio_config_t gpio_conf;
+    gpio_conf.intr_type = GPIO_INTR_DISABLE;
+    gpio_conf.mode = GPIO_MODE_OUTPUT;
+    gpio_conf.pin_bit_mask = (1 << AX_conf.rts_pin);
+    gpio_conf.pull_down_en = 0;
+    gpio_conf.pull_up_en = 0;
+    gpio_config(&gpio_conf);
+
+    gpio_set_level(AX_conf.rts_pin, 1);
 }
 
 
