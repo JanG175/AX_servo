@@ -110,7 +110,7 @@ static void AX_servo_receive_response(AX_conf_t AX_conf, uint8_t* response, uint
     }
     else
     {
-        ESP_LOGE(TAG, "UART read error");
+        // ESP_LOGE(TAG, "UART read error");
 
         for (uint32_t i = 0; i < len; i++)
             response[i] = 0;
